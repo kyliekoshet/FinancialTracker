@@ -12,15 +12,12 @@ router = APIRouter(prefix="/transactions")
 
 # Database Operations
 def get_transaction(db: Session, transaction_id: int) -> Optional[Transaction]:
-    """Get a single transaction by ID"""
     return db.query(Transaction).filter(Transaction.id == transaction_id).first()
 
 def get_transactions(db: Session, skip: int = 0, limit: int = 100) -> List[Transaction]:
-    """Get all transactions with pagination"""
     return db.query(Transaction).offset(skip).limit(limit).all()
 
 def create_transaction(db: Session, transaction: TransactionCreate) -> Transaction:
-    """Create a new transaction"""
     db_transaction = Transaction(
         amount=transaction.amount,
         type=transaction.type,
@@ -36,7 +33,6 @@ def update_transaction(
     transaction_id: int, 
     transaction_update: TransactionUpdate
 ) -> Optional[Transaction]:
-    """Update a transaction"""
     db_transaction = get_transaction(db, transaction_id)
     if db_transaction is None:
         return None
@@ -50,7 +46,6 @@ def update_transaction(
     return db_transaction
 
 def delete_transaction(db: Session, transaction_id: int) -> bool:
-    """Delete a transaction"""
     db_transaction = get_transaction(db, transaction_id)
     if db_transaction is None:
         return False
@@ -67,7 +62,6 @@ def create_transaction_route(
     category: str = "OTHER",
     db: Session = Depends(get_db)
 ):
-    """Create a new transaction"""
     try:
         # Convert string inputs to proper enums
         try:
@@ -86,7 +80,6 @@ def create_transaction_route(
                 detail=f"Invalid category. Must be one of: {[c.value for c in CategoryType]}"
             )
 
-        # Create the transaction
         transaction_data = TransactionCreate(
             amount=amount,
             type=transaction_type,
@@ -100,7 +93,6 @@ def create_transaction_route(
 
 @router.get("/", response_model=List[TransactionSchema])
 def read_transactions_route(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Retrieve all transactions with pagination"""
     try:
         return get_transactions(db, skip=skip, limit=limit)
     except Exception as e:
@@ -108,7 +100,6 @@ def read_transactions_route(skip: int = 0, limit: int = 100, db: Session = Depen
 
 @router.get("/{transaction_id}", response_model=TransactionSchema)
 def read_transaction_route(transaction_id: int, db: Session = Depends(get_db)):
-    """Get a specific transaction by ID"""
     transaction = get_transaction(db, transaction_id=transaction_id)
     if transaction is None:
         raise HTTPException(
@@ -123,7 +114,6 @@ def update_transaction_route(
     transaction: TransactionUpdate,
     db: Session = Depends(get_db)
 ):
-    """Update a transaction"""
     updated_transaction = update_transaction(
         db, 
         transaction_id=transaction_id, 
@@ -138,7 +128,6 @@ def update_transaction_route(
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_transaction_route(transaction_id: int, db: Session = Depends(get_db)):
-    """Delete a transaction"""
     if not delete_transaction(db, transaction_id=transaction_id):
         raise HTTPException(
             status_code=404,
